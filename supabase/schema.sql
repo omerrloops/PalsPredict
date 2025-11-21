@@ -48,7 +48,9 @@ create table markets (
   category text not null,
   end_date timestamp with time zone not null,
   status text default 'active' check (status in ('active', 'closed', 'resolved')),
-  volume numeric default 0
+  volume numeric default 0,
+  winning_outcome_name text,
+  resolved_at timestamp with time zone,
 );
 
 alter table markets enable row level security;
