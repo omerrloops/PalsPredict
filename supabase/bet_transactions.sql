@@ -30,7 +30,7 @@ create policy "Users can insert their own transactions" on bet_transactions
   for insert with check (auth.uid() = user_id);
 
 -- Create a view for daily volume aggregation (useful for charts)
-create or replace view outcome_volume as
+create or replace view daily_outcome_volumes as
 select 
   market_id,
   outcome_id,
@@ -43,7 +43,7 @@ group by market_id, outcome_id, date_trunc('day', created_at)
 order by day desc;
 
 -- Grant access to the view
-grant select on outcome_volume to authenticated;
+grant select on daily_outcome_volumes to authenticated;
 
 -- Verify the setup
 select 

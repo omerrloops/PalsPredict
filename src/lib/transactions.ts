@@ -45,7 +45,7 @@ export async function getMarketTransactions(marketId: string): Promise<Transacti
 export async function getDailyVolumes(marketId: string): Promise<DailyVolume[]> {
     const supabase = createClient();
     const { data, error } = await supabase
-        .from('outcome_volume')
+        .from('daily_outcome_volumes')
         .select('*')
         .eq('market_id', marketId)
         .order('day', { ascending: true });
