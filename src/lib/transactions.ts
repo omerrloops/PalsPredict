@@ -122,28 +122,52 @@ export function calculateCumulativeVolume(transactions: Transaction[]): Array<{
  */
 export async function getUserVolumesForMarket(marketId: string): Promise<Array<{ userId: string; username?: string; total: number }>> {
     const supabase = createClient();
-    const { data, error } = await supabase
+    // 1. Get bet transactions for the market
+    const { data: bets, error: betsError } = await supabase
         .from('bet_transactions')
-        .select('user_id, amount, profiles(username)')
+        .select('user_id, amount')
         .eq('market_id', marketId)
         .eq('transaction_type', 'bet');
 
-    if (error) {
-        console.error('Error fetching user volumes:', error);
+    if (betsError) {
+        console.error('Error fetching bet transactions:', betsError);
         return [];
     }
 
-    const volumes: Record<string, { username?: string; total: number }> = {};
-    data?.forEach((row: any) => {
+    // 2. Aggregate total amount per user
+    const volumes: Record<string, { total: number }> = {};
+    const userIds: Set<string> = new Set();
+    bets?.forEach((row: any) => {
         const uid = row.user_id as string;
         const amt = Number(row.amount);
-        if (!volumes[uid]) {
-            volumes[uid] = { username: row.profiles?.username, total: 0 };
-        }
+        userIds.add(uid);
+        if (!volumes[uid]) volumes[uid] = { total: 0 };
         volumes[uid].total += amt;
     });
 
-    return Object.entries(volumes)
-        .map(([userId, { username, total }]) => ({ userId, username, total }))
-        .sort((a, b) => b.total - a.total);
+    // 3. Fetch usernames/emails for those users
+    let profilesMap: Record<string, { username?: string; email?: string }> = {};
+    if (userIds.size > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, username, email')
+            .in('id', Array.from(userIds));
+        if (!profilesError && profiles) {
+            profiles.forEach((p: any) => {
+                profilesMap[p.id] = { username: p.username, email: p.email };
+            });
+        } else {
+            console.error('Error fetching profiles:', profilesError);
+        }
+    }
+
+    // 4. Build final array with username fallback to email
+    const result = Object.entries(volumes).map(([userId, { total }]) => {
+        const profile = profilesMap[userId] || {};
+        const name = profile.username || profile.email;
+        return { userId, username: name, total };
+    });
+
+    // 5. Sort descending by total volume
+    return result.sort((a, b) => b.total - a.total);
 }
