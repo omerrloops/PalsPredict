@@ -44,7 +44,7 @@ begin
     -- Update market status
     update markets
     set status = 'resolved',
-        winning_outcome_id = p_winning_outcome_name,
+        winning_outcome_name = p_winning_outcome_name,
         resolved_at = now()
     where id = p_market_id;
     
@@ -96,7 +96,7 @@ begin
   -- 5. Update market status
   update markets
   set status = 'resolved',
-      winning_outcome_id = p_winning_outcome_name,
+      winning_outcome_name = p_winning_outcome_name,
       resolved_at = now()
   where id = p_market_id;
 
