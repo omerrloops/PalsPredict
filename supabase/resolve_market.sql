@@ -3,7 +3,7 @@
 
 create or replace function resolve_market(
   p_market_id uuid,
-  p_winning_outcome_id text,
+  p_winning_outcome_id uuid,
   p_admin_user_id uuid
 )
 returns jsonb as $$
