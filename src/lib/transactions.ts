@@ -145,26 +145,26 @@ export async function getUserVolumesForMarket(marketId: string): Promise<Array<{
         volumes[uid].total += amt;
     });
 
-    // 3. Fetch usernames/emails for those users
-    let profilesMap: Record<string, { username?: string; email?: string }> = {};
+    // 3. Fetch usernames/full_name for those users
+    let profilesMap: Record<string, { username?: string; full_name?: string }> = {};
     if (userIds.size > 0) {
         const { data: profiles, error: profilesError } = await supabase
             .from('profiles')
-            .select('id, username, email')
+            .select('id, username, full_name')
             .in('id', Array.from(userIds));
         if (!profilesError && profiles) {
             profiles.forEach((p: any) => {
-                profilesMap[p.id] = { username: p.username, email: p.email };
+                profilesMap[p.id] = { username: p.username, full_name: p.full_name };
             });
         } else {
             console.error('Error fetching profiles:', profilesError);
         }
     }
 
-    // 4. Build final array with username fallback to email
+    // 4. Build final array with username fallback to full_name
     const result = Object.entries(volumes).map(([userId, { total }]) => {
         const profile = profilesMap[userId] || {};
-        const name = profile.username || profile.email;
+        const name = profile.username || profile.full_name;
         return { userId, username: name, total };
     });
 

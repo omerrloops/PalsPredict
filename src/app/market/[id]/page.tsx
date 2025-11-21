@@ -285,7 +285,7 @@ export default function MarketPage({ params }: { params: { id: string } }) {
                     </div>
                     {/* User Volume Table */}
                     <div className="bg-card rounded-xl border border-border p-6">
-                        <h3 className="text-lg font-semibold mb-4">Top Contributors</h3>
+                        <h3 className="text-lg font-semibold mb-4">Pals</h3>
                         {userVolumes.length === 0 ? (
                             <p className="text-muted-foreground text-sm">No bets placed yet.</p>
                         ) : (
