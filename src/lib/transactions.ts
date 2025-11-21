@@ -116,3 +116,34 @@ export function calculateCumulativeVolume(transactions: Transaction[]): Array<{
         };
     });
 }
+/**
+ * Get total bet volume per user for a given market.
+ * Returns array sorted descending by total.
+ */
+export async function getUserVolumesForMarket(marketId: string): Promise<Array<{ userId: string; username?: string; total: number }>> {
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from('bet_transactions')
+        .select('user_id, amount, profiles(username)')
+        .eq('market_id', marketId)
+        .eq('transaction_type', 'bet');
+
+    if (error) {
+        console.error('Error fetching user volumes:', error);
+        return [];
+    }
+
+    const volumes: Record<string, { username?: string; total: number }> = {};
+    data?.forEach((row: any) => {
+        const uid = row.user_id as string;
+        const amt = Number(row.amount);
+        if (!volumes[uid]) {
+            volumes[uid] = { username: row.profiles?.username, total: 0 };
+        }
+        volumes[uid].total += amt;
+    });
+
+    return Object.entries(volumes)
+        .map(([userId, { username, total }]) => ({ userId, username, total }))
+        .sort((a, b) => b.total - a.total);
+}

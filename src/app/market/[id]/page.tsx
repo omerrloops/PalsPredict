@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { getMarkets } from '@/lib/api';
 import { Market } from '@/lib/types';
 import { TrendingUp, Users, Calendar, Trophy } from 'lucide-react';
@@ -8,7 +9,7 @@ import Image from 'next/image';
 import { notFound, useRouter } from 'next/navigation';
 import BetModal from '@/components/BetModal';
 import ResolveMarketModal from '@/components/ResolveMarketModal';
-import { createClient } from '@/lib/supabase/client';
+import { getUserVolumesForMarket } from '@/lib/transactions';
 
 // This is a temporary solution since we don't have a getMarketById function yet
 // In a real app, we would fetch the specific market by ID
@@ -26,6 +27,7 @@ export default function MarketPage({ params }: { params: { id: string } }) {
     const [userPositions, setUserPositions] = useState<Record<string, number>>({});
     const [isAdmin, setIsAdmin] = useState(false);
     const [betModalOpen, setBetModalOpen] = useState(false);
+    const [userVolumes, setUserVolumes] = useState<Array<{ userId: string; username?: string; total: number }>>([]);
     const [resolveModalOpen, setResolveModalOpen] = useState(false);
     const [selectedOutcome, setSelectedOutcome] = useState<{
         id: string;
@@ -59,6 +61,9 @@ export default function MarketPage({ params }: { params: { id: string } }) {
         loadParticipants();
         loadOutcomeVolumes();
         loadUserPositions();
+        // Load per-user total volumes for this market
+        const volumes = await getUserVolumesForMarket(params.id);
+        setUserVolumes(volumes);
     };
 
     const loadMarket = async () => {
@@ -277,6 +282,34 @@ export default function MarketPage({ params }: { params: { id: string } }) {
                                 </span>
                             </div>
                         </div>
+                    </div>
+                    {/* User Volume Table */}
+                    <div className="bg-card rounded-xl border border-border p-6">
+                        <h3 className="text-lg font-semibold mb-4">Top Contributors</h3>
+                        {userVolumes.length === 0 ? (
+                            <p className="text-muted-foreground text-sm">No bets placed yet.</p>
+                        ) : (
+                            <table className="w-full text-sm">
+                                <thead className="border-b border-white/10">
+                                    <tr className="text-muted-foreground">
+                                        <th className="text-left py-1">User</th>
+                                        <th className="text-right py-1">Volume</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {userVolumes.slice(0, 10).map((u) => (
+                                        <tr key={u.userId} className="border-b border-white/5">
+                                            <td className="py-1">
+                                                {u.username ? u.username : u.userId.slice(0, 8) + '…'}
+                                            </td>
+                                            <td className="text-right py-1 font-medium">
+                                                {u.total.toLocaleString()} credits
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
                     </div>
                 </div>
             </div>
