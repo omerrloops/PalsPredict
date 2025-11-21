@@ -3,7 +3,7 @@
 
 create or replace function resolve_market(
   p_market_id uuid,
-  p_winning_outcome_id uuid,
+  p_winning_outcome_name text,
   p_admin_user_id uuid
 )
 returns jsonb as $$
@@ -37,14 +37,14 @@ begin
   -- 3. Calculate total amount bet on winning outcome
   select coalesce(sum(amount), 0) into v_winning_pool
   from bets
-  where market_id = p_market_id and outcome_id = p_winning_outcome_id;
+  where market_id = p_market_id and outcome_id = p_winning_outcome_name;
 
   -- If no one bet on the winning outcome, no payouts needed
   if v_winning_pool = 0 then
     -- Update market status
     update markets
     set status = 'resolved',
-        winning_outcome_id = p_winning_outcome_id,
+        winning_outcome_id = p_winning_outcome_name,
         resolved_at = now()
     where id = p_market_id;
     
@@ -63,7 +63,7 @@ begin
       sum(amount) as total_bet
     from bets
     where market_id = p_market_id 
-      and outcome_id = p_winning_outcome_id
+      and outcome_id = p_winning_outcome_name
     group by user_id
   loop
     -- Calculate proportional payout: (user's bet / total winning pool) * total market volume
@@ -83,7 +83,7 @@ begin
       transaction_type
     ) values (
       p_market_id,
-      p_winning_outcome_id,
+      p_winning_outcome_name,
       v_winner_record.user_id,
       v_payout,
       'win'
@@ -96,7 +96,7 @@ begin
   -- 5. Update market status
   update markets
   set status = 'resolved',
-      winning_outcome_id = p_winning_outcome_id,
+      winning_outcome_id = p_winning_outcome_name,
       resolved_at = now()
   where id = p_market_id;
 

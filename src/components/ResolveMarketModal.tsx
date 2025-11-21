@@ -36,7 +36,7 @@ export default function ResolveMarketModal({ marketId, outcomes, onClose, onReso
             // Call the resolve_market function
             const { data, error: rpcError } = await supabase.rpc('resolve_market', {
                 p_market_id: marketId,
-                p_winning_outcome_id: selectedOutcome,
+                p_winning_outcome_name: selectedOutcome,
                 p_admin_user_id: user.id
             });
 
@@ -92,8 +92,8 @@ export default function ResolveMarketModal({ marketId, outcomes, onClose, onReso
                                 key={outcome.id}
                                 onClick={() => setSelectedOutcome(outcome.id)}
                                 className={`w-full p-4 rounded-lg border-2 transition-all ${selectedOutcome === outcome.id
-                                        ? 'border-primary bg-primary/10'
-                                        : 'border-white/5 bg-secondary/30 hover:border-primary/50'
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-white/5 bg-secondary/30 hover:border-primary/50'
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
